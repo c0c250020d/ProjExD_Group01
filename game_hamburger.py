@@ -16,7 +16,7 @@ zairyo = {
 }
 
 #数字キーに番号を対応させる
-KEY_MAP = {
+key_id = {
     pg.K_1: 1, pg.K_KP1: 1,
     pg.K_2: 2, pg.K_KP2: 2,
     pg.K_3: 3, pg.K_KP3: 3,
@@ -40,7 +40,7 @@ def get_random_recipe(): #お題となるメニューをランダムに決める
 
     return menu_idx
 
-def load_and_scale_image(file_name, target_width):
+def load_and_scale_image(file_name, target_width): #材料画像を縮小
 
     filepath = os.path.join("image", file_name)
     img = pg.image.load(filepath).convert_alpha()
@@ -51,7 +51,7 @@ def load_and_scale_image(file_name, target_width):
         
     return pg.transform.scale(img, (target_width, new_height)), new_height
 
-def load_background_image(file_name, size):
+def load_background_image(file_name, size): #背景画像
 
     filepath = os.path.join("image", file_name)
     img = pg.image.load(filepath).convert_alpha() 
@@ -69,8 +69,9 @@ def main():
     pg.display.set_caption("ハンバーガー屋を経営しよう")
     clock = pg.time.Clock()
     
-    font = pg.font.SysFont("meiryo", 24)
-    result_font = pg.font.SysFont("meiryo", 48) 
+    font = pg.font.SysFont("meiryo", 20) #判定結果の文字用
+    result_font = pg.font.SysFont("meiryo", 40) 
+    finish_font = pg.font.SysFont("meiryo", 48)
 
  
     bg_image = load_background_image("haikei_2.jpg", (WIDTH, HEIGHT)) #背景画像の読み込み
@@ -81,7 +82,7 @@ def main():
             zairyo[ing_id]["image"] = img
             zairyo[ing_id]["height"] = computed_height 
 
-
+    #見本のハンバーガー画像読み込み
     menu_img_1 = pg.image.load("image/1_nomal.png")
     menu_img_1 =pg.transform.rotozoom(menu_img_1, 0, 0.08)
     menu_img_2 = pg.image.load("image/2_baconcheese.png")
@@ -102,7 +103,7 @@ def main():
     # 最初のターゲットレシピをランダムに決定
     target_menu = get_random_recipe()
 
-    make_burger = []
+    make_burger = [] #積み上げている材料を保存する
     judge_result = None #判定結果用
 
     x = True
@@ -116,33 +117,30 @@ def main():
             if event.type == pg.QUIT:
                 x = False
                 
-            elif event.type == pg.KEYDOWN: # クリア表示が出ている時に何かキーを押したら次の問題へ進む
-                if judge_result == 1: 
+            elif event.type == pg.KEYDOWN: 
+                if judge_result == 1: # クリア時に何かキーを押したら次の注文へ
                     make_burger = []
                     judge_result = None
                     target_menu = get_random_recipe()  # 次のレシピをランダム決定
                     continue
 
                 
-                if event.key in KEY_MAP: # 具材を乗せる
-                    ing_id = KEY_MAP[event.key]
+                if event.key in key_id: # 数字キーに対応して具材を乗せる
+                    ing_id = key_id[event.key]
                     make_burger.append(ing_id)
                     judge_result = None 
 
-                elif event.key == pg.K_SPACE:# スペースキーで判定（商品提供）
+                elif event.key == pg.K_RETURN:# エンターキーで判定（商品提供）
                     if make_burger == RECIPES[target_menu]:
                         judge_result = 1
                     else:
                         judge_result = 0
 
                 
-                # elif event.key == pg.K_BACKSPACE:#Backspaceを押したら判定表示を消す
-                #     if current_burger:
-                #         current_burger.pop()
-                #     judge_result = None
+
 
                 
-        #ランダムに決定されたtarget_menuに合わせてモニター図位置に見本画像を置く
+        #ランダムに決定されたtarget_menuに合わせてモニターの位置に見本画像を置く
         if target_menu == 1:
             screen.blit(menu_img_1, (500, 60))
         elif target_menu == 2:
@@ -168,28 +166,26 @@ def main():
             info = zairyo[zairyo_id]
             height = info["height"]
             
-            if index == 0:
+            if index == 0: #1個目の積み上げ
                 new_y -= height
             else:
-                new_y -= int(height * 0.1)
+                new_y -= int(height * 0.1) #どんどんy座標を小さくしていく
         
             screen.blit(info["image"], (base_x, new_y))
         
-        # if judge_result is not None:
-        #     bans_top_height = bans_img_top.get_height()
-        #     # 一番上の具材からさらにバンズの高さ分引いた位置（少し重ねるために+10などの微調整を入れると綺麗です）
-        #     bans_y = new_y - bans_top_height + 10 
-        #     screen.blit(bans_img_top, (img_x, bans_y))
         
-        if judge_result == 1:
+        if judge_result == 1: 
+            pg.draw.rect(screen, (70, 255, 240), (470, 100, 210, 60))
             res_text = result_font.render("注文通り！", True, (0, 180, 0)) # 緑色
-            screen.blit(res_text, (800, 90))
+            screen.blit(res_text, (480, 100))
             next_text = font.render("任意のキーを押して次へ進む", True, (100, 100, 100))
-            screen.blit(next_text, (780, 160))
+            screen.blit(next_text, (450, 50))
+
         elif judge_result == 0:
+            pg.draw.rect(screen, (255, 140, 80), (450, 100, 250, 60))
             res_text = result_font.render("注文と違う...", True, (200, 0, 0)) # 赤色
-            screen.blit(res_text, (800, 90))
-            gameover = result_font.render("GAME OVER", True, (200, 0, 0)) # 赤色
+            screen.blit(res_text, (460, 100))
+            gameover = finish_font.render("GAME OVER", True, (200, 0, 0)) # 赤色
             screen.blit(gameover, (400, 325))
 
             pg.display.update()
