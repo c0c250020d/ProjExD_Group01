@@ -90,23 +90,6 @@ def main():
             zairyo[ing_id]["height"] = computed_height 
 
     #見本のハンバーガー画像読み込み
-    # menu_img_1 = pg.image.load("image/1_nomal.png")
-    # menu_img_1 =pg.transform.rotozoom(menu_img_1, 0, 0.08)
-    # menu_img_2 = pg.image.load("image/2_baconcheese.png")
-    # menu_img_2 =pg.transform.rotozoom(menu_img_2, 0, 0.08)
-    # menu_img_3 = pg.image.load("image/3_cheese.png")
-    # menu_img_3 =pg.transform.rotozoom(menu_img_3, 0, 0.08)
-    # menu_img_4 = pg.image.load("image/4_beji.png")
-    # menu_img_4 =pg.transform.rotozoom(menu_img_4, 0, 0.08)
-    # menu_img_5 = pg.image.load("image/5_double.png")
-    # menu_img_5 =pg.transform.rotozoom(menu_img_5, 0, 0.08)
-    # menu_img_6 = pg.image.load("image/6_special.png")
-    # menu_img_6 =pg.transform.rotozoom(menu_img_6, 0, 0.08)
-    # menu_img_7 = pg.image.load("image/7_happy.png")
-    # menu_img_7 =pg.transform.rotozoom(menu_img_7, 0, 0.08)
-    # bans_img_top = pg.image.load("image/bans_top.png")
-    # bans_img_top =pg.transform.rotozoom(bans_img_top, 0, 0.08)
-    
     menu_images = {}
     menu_files = {
         1: "1_nomal.png", 2: "2_baconcheese.png", 3: "3_cheese.png",
@@ -133,11 +116,6 @@ def main():
         # 背景画像を描画
         if bg_image:
             screen.blit(bg_image, (0, 0))
-
-        
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                x = False
             
         # スコアの描画
         draw_score(screen, score_font, score)
@@ -152,13 +130,12 @@ def main():
                     make_burger = []
                     judge_result = None
                     target_menu = get_random_recipe()  # 次のレシピをランダム決定
-                    # continue
+                    continue
 
                 
                 if event.key in key_id: # 数字キーに対応して具材を乗せる
                     ing_id = key_id[event.key]
                     make_burger.append(ing_id)
-                    # judge_result = None 
 
                 elif event.key == pg.K_RETURN:# エンターキーで判定（商品提供）
                     if make_burger == RECIPES[target_menu]:
@@ -168,28 +145,9 @@ def main():
                         judge_result = 0
                         score = max(0, score - 10) # ミスで-10点（0未満にならない
 
-                
-
-
-                
-        #ランダムに決定されたtarget_menuに合わせてモニターの位置に見本画像を置く
-        # if target_menu == 1:
-        #     screen.blit(menu_img_1, (500, 60))
-        # elif target_menu == 2:
-        #     screen.blit(menu_img_2, (500, 60))
-        # elif target_menu == 3:
-        #     screen.blit(menu_img_3, (500, 60))
-        # elif target_menu == 4:
-        #     screen.blit(menu_img_4, (500, 60))
-        # elif target_menu == 5:
-        #     screen.blit(menu_img_5, (500, 60))
-        # elif target_menu == 6:
-        #     screen.blit(menu_img_6, (500, 60))
-        # elif target_menu == 7:
-        #     screen.blit(menu_img_7, (500, 60))
+        # ランダムに決定されたtarget_menuに合わせてモニターの位置に見本画像を置く
         if target_menu in menu_images:
             screen.blit(menu_images[target_menu], (500, 60))
-
 
         #材料の積み上げ
         base_x = 830
@@ -219,12 +177,10 @@ def main():
             pg.draw.rect(screen, (255, 140, 80), (450, 100, 250, 60))
             res_text = result_font.render("注文と違う...", True, (200, 0, 0)) # 赤色
             screen.blit(res_text, (460, 100))
-            gameover = finish_font.render("GAME OVER", True, (200, 0, 0)) # 赤色
-            screen.blit(gameover, (400, 325))
 
-            pg.display.update()
-            time.sleep(2)
-            return 
+            # 0.5秒経過した後にここを通過するため、「任意のキーを押して〜」が表示される
+            next_text = font.render("任意のキーを押して次へ進む", True, (100, 100, 100))
+            screen.blit(next_text, (450, 50))
         
         pg.display.update()
         clock.tick(60)
