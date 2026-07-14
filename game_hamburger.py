@@ -35,8 +35,20 @@ RECIPES = {
     7: [5, 4, 2, 5, 1, 3, 2, 4] #ハッピーバーガー
 }
 
-def get_random_recipe(): #お題となるメニューをランダムに決める
-    menu_idx = random.choice(list(RECIPES))
+#スキル2が発動されたときの簡単なメニュー
+EASY_RECIPE = {
+    1:[3]
+}
+
+
+
+def get_random_recipe(is_skill2_active = False): #お題となるメニューをランダムに決める
+
+    #スキル２が発動中の場合EASY_RECIPEを用いる
+    if (is_skill2_active == False):
+        menu_idx = random.choice(list(RECIPES))
+    else:
+        menu_idx = random.choice(list(EASY_RECIPE))
 
     return menu_idx
 
@@ -59,6 +71,11 @@ def load_background_image(file_name, size): #背景画像
 
 
 def main():
+
+    #スキル2変数宣言
+    is_skill2_active = False
+    skill_timer = 0
+
     pg.init()
     try:
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -101,16 +118,23 @@ def main():
     bans_img_top =pg.transform.rotozoom(bans_img_top, 0, 0.08)
     
     # 最初のターゲットレシピをランダムに決定
-    target_menu = get_random_recipe()
+    target_menu = get_random_recipe(is_skill2_active)
 
     make_burger = [] #積み上げている材料を保存する
     judge_result = None #判定結果用
 
     x = True
+    
     while x:
         # 背景画像を描画
         if bg_image:
             screen.blit(bg_image, (0, 0))
+
+            #スキル２タイマー
+            if is_skill2_active == True:
+                skill_timer -= 1
+                if skill_timer <= 0:
+                    is_skill2_active = False
 
         
         for event in pg.event.get():
@@ -121,7 +145,7 @@ def main():
                 if judge_result == 1: # クリア時に何かキーを押したら次の注文へ
                     make_burger = []
                     judge_result = None
-                    target_menu = get_random_recipe()  # 次のレシピをランダム決定
+                    target_menu = get_random_recipe(is_skill2_active)  # 次のレシピをランダム決定
                     continue
 
                 
@@ -135,6 +159,17 @@ def main():
                         judge_result = 1
                     else:
                         judge_result = 0
+
+                #Eキーを押すかつスコアが30以上でスキル2発動
+                if event.key == pg.K_e and score >= 30 and is_skill2_active == False:
+                    score -= 30
+                    is_skill2_active = True
+                    skill_timer = 60*5
+                    target_menu = get_random_recipe(is_skill2_active)
+                    make_burger = []
+                    
+
+                    
 
                 
 
