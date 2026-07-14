@@ -60,6 +60,7 @@ def load_background_image(file_name, size): #背景画像
 
 def main():
     pg.init()
+    pg.mixer.init()
     try:
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
     except:
@@ -99,6 +100,14 @@ def main():
     menu_img_7 =pg.transform.rotozoom(menu_img_7, 0, 0.08)
     bans_img_top = pg.image.load("image/bans_top.png")
     bans_img_top =pg.transform.rotozoom(bans_img_top, 0, 0.08)
+
+    se_put=pg.mixer.Sound("sound/put.mp3")
+    se_correct=pg.mixer.Sound("sound/clear.mp3")
+    se_incorrect=pg.mixer.Sound("sound/miss.mp3")
+    se_skill=pg.mixer.Sound("sound/skill.mp3")
+
+    pg.mixer.music.load("sound/BGM.mp3")
+    pg.mixer.music.play(loops=-1)
     
     # 最初のターゲットレシピをランダムに決定
     target_menu = get_random_recipe()
@@ -129,12 +138,15 @@ def main():
                     ing_id = key_id[event.key]
                     make_burger.append(ing_id)
                     judge_result = None 
+                    se_put.play()
 
                 elif event.key == pg.K_RETURN:# エンターキーで判定（商品提供）
                     if make_burger == RECIPES[target_menu]:
                         judge_result = 1
+                        se_correct.play()
                     else:
                         judge_result = 0
+                        se_incorrect.play()
 
                 
 
