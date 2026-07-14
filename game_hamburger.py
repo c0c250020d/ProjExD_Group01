@@ -170,33 +170,72 @@ def main():
     LIMIT_TIME = 30  #制限時間（秒）
     start_ticks = pg.time.get_ticks()  #ゲーム開始時のミリ秒を取得
     # スコアの初期値
+ 
+    stop_until = 0       # この時間になるまでタイマーストップ
+    skill_used = False   # この注文でスキルを使用したか
 
+    
 
     x = True
     while x:
+        current_ticks = pg.time.get_ticks()
+
         # 背景画像を描画
         if bg_image:
-            screen.blit(bg_image, (0, 0))
+            screen.blit(bg_image, (0, 0))   
 
-        #タイマーの計算
-        #経過時間を秒に変換し、残り時間を計算
-        seconds_passed = (pg.time.get_ticks() - start_ticks) / 1000
-        time_left = max(0, LIMIT_TIME - seconds_passed)
+        # --- タイマー計算ロジック（修正） ---
+        if current_ticks < stop_until:
+            # スキル発動中は、経過時間を「Tキーを押した瞬間の時間」で固定する
+            # ※ stop_until（終了時間）から10秒（10000ミリ秒）引いたものが、Tキーを押した瞬間の時刻
+            time_pressed = stop_until - 10000
+            seconds_passed = (time_pressed - start_ticks) / 1000
+            time_left = max(0, LIMIT_TIME - seconds_passed)
+            
+            # 「STOP: ○秒」と水色で表示する
+            stop_left_sec = int((stop_until - current_ticks) / 1000) + 1
+            timer_text = timer_font.render(f"STOP: {stop_left_sec}秒", True, (0, 191, 255))
 
-        #残り時間を画面の左上に描画
-        timer_text = timer_font.render(f"残り時間: {int(time_left)}秒", True, (255, 255, 255))
+        #     # 「STOP: ○秒」と水色で表示する
+        #     stop_left_sec = int((stop_until - current_ticks) / 1000) + 1
+        #     timer_text = timer_font.render(f"STOP: {stop_left_sec}秒", True, (0, 191, 255))
+        # else:
+        #     # 通常時の計算
+        #     seconds_passed = (current_ticks - start_ticks) / 1000 
+        #     time_left = max(0, LIMIT_TIME - seconds_passed) 
+        #     timer_text = timer_font.render(f"残り時間: {int(time_left)}秒", True, (255, 255, 255)) 
+ 
+        # # 通常時の時間切れ判定（停止中はtime_leftが減らないので安全）
+        # if current_ticks >= stop_until:
+        #     seconds_passed = (current_ticks - start_ticks) / 1000 
+        #     time_left = max(0, LIMIT_TIME - seconds_passed) 
+        #     if time_left <= 0 and judge_result is None: 
+        #         gameover = finish_font.render("TIME UP! GAME OVER", True, (200, 0, 0)) 
+        #         screen.blit(gameover, (325, 300)) 
+        #         pg.display.update() 
+        #         time.sleep(2) 
+        #         return
+        else:
+            #タイマーの計算
+            #経過時間を秒に変換し、残り時間を計算
+            seconds_passed = (pg.time.get_ticks() - start_ticks) / 1000
+            time_left = max(0, LIMIT_TIME - seconds_passed)
+
+            #残り時間を画面の左上に描画
+            timer_text = timer_font.render(f"残り時間: {int(time_left)}秒", True, (255, 255, 255))
         #文字が見えやすいように背景に黒い四角形を軽く敷く
         pg.draw.rect(screen, (0, 0, 0), (15, 20, 260, 50))
         screen.blit(timer_text, (20, 20))
 
         #時間切れの判定（正解・不正解の演出中はタイマーで死なないようにする）
-        if time_left <= 0:
-            gameover = finish_font.render("TIME UP! GAME OVER", True, (200, 0, 0))
-            screen.blit(gameover, (325, 300))
-            pg.display.update()
-            time.sleep(2)
-            ending(screen, score)
-            return
+        if current_ticks >= stop_until:
+            if time_left <= 0:
+                gameover = finish_font.render("TIME UP! GAME OVER", True, (200, 0, 0))
+                screen.blit(gameover, (325, 300))
+                pg.display.update()
+                time.sleep(2)
+                ending(screen, score)
+                return
             
         # スコアの描画
         draw_score(screen, score_font, score)
@@ -211,9 +250,9 @@ def main():
                     if judge_result is not None:
                         make_burger = []
                         judge_result = None
+                        skill_used = False
                         target_menu = get_random_recipe()  # 次のレシピをランダム決定
                         continue
-
                 
                 if event.key in key_id: # 数字キーに対応して具材を乗せる
                     ing_id = key_id[event.key]
@@ -226,6 +265,15 @@ def main():
                     else:
                         judge_result = 2
                         score = max(0, score - 10) # ミスで-10点（0未満にならない
+                # Tキーが押された、かつまだこの注文でスキルを使っていないかつゲームオーバー等の演出中じゃないとき
+                elif event.key == pg.K_t:
+                    if not skill_used and judge_result is None and score >= 10:
+                        stop_until = pg.time.get_ticks() + 10000  # 現在の時刻から10秒後までタイマーをストップさせる
+                        start_ticks += 10000
+                        score -= 10
+                        skill_used = True                         # 「使用済み」にする
+                
+
 
         # ランダムに決定されたtarget_menuに合わせてモニターの位置に見本画像を置く
         if target_menu in menu_images:
