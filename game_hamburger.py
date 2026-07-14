@@ -70,6 +70,10 @@ def load_background_image(file_name, size): #背景画像
     return pg.transform.scale(img, size)
 
 def ending(screen, score):
+    se_level1=pg.mixer.Sound("sound/hotaru-piano.mp3")
+    se_level2=pg.mixer.Sound("sound/level2.mp3")
+    se_level3=pg.mixer.Sound("sound/level3.mp3")
+    se_level4=pg.mixer.Sound("sound/level4-2.mp3")
     score_font = pg.font.SysFont("meiryo", 50)
     rank_font = pg.font.SysFont("meiryo", 120)
     speak_font = pg.font.SysFont("meiryo", 40)
@@ -80,22 +84,26 @@ def ending(screen, score):
         frame_color = (0, 190, 190)
         rank_txt = rank_font.render("★☆☆☆", True, (255, 255, 0))
         speak_txt = speak_font.render("【見習いアルバイト】", True, (0, 0, 0))
+        se_level1.play()
     elif score <= 80:
         bg_color = (0, 190, 190)
         frame_color = (130, 130, 130)
         rank_txt = rank_font.render("★★☆☆",True, (255, 255, 0))
         speak_txt = speak_font.render("【バイトリーダー】", True, (0, 0, 0))
+        se_level2.play()
     elif score <= 120:
         bg_color = (0, 220, 103)
         frame_color = (255, 195, 40)
         rank_txt = rank_font.render("★★★☆", True, (255, 255, 0))
         speak_txt = speak_font.render("【三ツ星バーガー店】", True, (0, 0, 0))
+        se_level3.play()
     else:
         bg_color = (255, 195, 40)
         frame_color = (0, 220, 103)
         rank_txt = rank_font.render("★★★★", True, (255, 255, 0))
         speak_txt = speak_font.render("【ハンバーガーの申し子】", True, (0, 0, 0))
-
+        se_level4.play()
+    
     bg_img = pg.Surface((1100, 650))
     pg.draw.rect(bg_img, bg_color, pg.Rect(0, 0, 1100, 650))
     # bg_img.set_alpha(230)
@@ -122,7 +130,7 @@ def ending(screen, score):
 
     screen.blit(bg_img,[0,0])
     pg.display.update()
-    time.sleep(3)
+    time.sleep(10)
 
         
 def draw_score(screen, font, score):
@@ -139,6 +147,7 @@ def main():
     skill_timer = 0
 
     pg.init()
+    pg.mixer.init()
     try:
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
     except:
@@ -176,6 +185,16 @@ def main():
     bans_img_top = pg.image.load("image/bans_top.png")
     bans_img_top = pg.transform.rotozoom(bans_img_top, 0, 0.08)
 
+    bans_img_top =pg.transform.rotozoom(bans_img_top, 0, 0.08)
+
+    se_put=pg.mixer.Sound("sound/put.mp3")
+    se_correct=pg.mixer.Sound("sound/clear.mp3")
+    se_incorrect=pg.mixer.Sound("sound/miss.mp3")
+    se_skill=pg.mixer.Sound("sound/skill.mp3")
+
+    pg.mixer.music.load("sound/BGM.mp3")
+    pg.mixer.music.play(loops=-1)
+    
     # 最初のターゲットレシピをランダムに決定
     target_menu = get_random_recipe(is_skill2_active)
 
@@ -252,6 +271,7 @@ def main():
                 screen.blit(gameover, (325, 300))
                 pg.display.update()
                 time.sleep(2)
+                pg.mixer.music.stop()
                 ending(screen, score)
                 return
             
@@ -287,30 +307,38 @@ def main():
                 if event.key in key_id: # 数字キーに対応して具材を乗せる
                     ing_id = key_id[event.key]
                     make_burger.append(ing_id)
+                    judge_result = None 
+                    se_put.play()
 
                 elif event.key == pg.K_RETURN:# エンターキーで判定（商品提供）
                     if make_burger == RECIPES[target_menu]:
                         judge_result = 1
                         score += 10 #成功で+10点
+                        se_correct.play()
                     else:
                         judge_result = 2
                         score = max(0, score - 10) # ミスで-10点（0未満にならない
                 # Tキーが押された、かつまだこの注文でスキルを使っていないかつゲームオーバー等の演出中じゃないとき
+                        se_incorrect.play()
                 elif event.key == pg.K_t:
                     if not skill_used and judge_result is None and score >= 10:
+                        se_skill.play()
                         stop_until = pg.time.get_ticks() + 10000  # 現在の時刻から10秒後までタイマーをストップさせる
                         start_ticks += 10000
                         score -= 10
                         skill_used = True                         # 「使用済み」にする
                         judge_result = 0
+                        
 
                 #Eキーを押すかつスコアが30以上でスキル2発動
                 if event.key == pg.K_e and score >= 30 and is_skill2_active == False:
+                    
                     score -= 30
                     is_skill2_active = True
                     skill_timer = 60*3
                     target_menu = get_random_recipe(is_skill2_active)
                     make_burger = []
+                    se_skill.play()
                     
 
                     
